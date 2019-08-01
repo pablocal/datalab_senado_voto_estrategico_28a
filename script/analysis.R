@@ -5,13 +5,14 @@
 
 rm(list = ls())
 library(tidyverse)
-#source("source/elections.R")
+library(tmap)
+source("source/elections.R")
 
 
 # 1. Get data -------------------------------------------------------------
 cong <- read_rds("data/cong.RDS")
 sen <- read_rds("data/sen.RDS")
-provs <- read_csv2("data/provs.csv", locale = locale(encoding = "Latin1"))
+provs <- read_csv("data/provs.csv", locale = locale(encoding = "Latin1"))
 
 # 2. Data wrangling -------------------------------------------------------
 
@@ -112,7 +113,6 @@ sjmisc::frq(df$party)
 
 ## disim index
 df <- df %>% 
-  filter(!(party == "VOX" & year != 2019)) %>% 
   mutate(dif = por_sen - por_cong,
          dif_max = max_sen - por_cong,
          dif_min = min_sen - por_cong)
@@ -135,48 +135,138 @@ df %>% group_by(year, CPROV,prov_name) %>% summarise(dif_wt2 = weighted.mean(dif
                                            ratio_wt = weighted.mean(ratio, por_cong/100*por_turnout, na.rm = T)) %>% 
   arrange(CPROV, year)
 
-df %>% group_by(year, CPROV, prov_name, party) %>% summarise(dif_1  = mean(dif, na.rm = T), 
-                                           dif_wt1 = weighted.mean(dif, por_cong, na.rm = T), 
-                                           dif_wt2 = weighted.mean(dif, por_cong/100*por_turnout, na.rm = T),
-                                           dif_max_1  = mean(dif_max, na.rm = T), 
-                                           dif_max_wt1 = weighted.mean(dif_max, por_cong, na.rm = T), 
-                                           dif_max_wt2 = weighted.mean(dif_max, por_cong/100*por_turnout, na.rm = T),
-                                           dif_min_1  = mean(dif_min, na.rm = T), 
-                                           dif_min_wt1 = weighted.mean(dif_min, por_cong, na.rm = T), 
-                                           dif_min_wt2 = weighted.mean(dif_min, por_cong/100*por_turnout, na.rm = T),
-                                           ratio_1  = mean(ratio, na.rm = TRUE),
-                                           ratio_wt = weighted.mean(ratio, por_cong/100*por_turnout, na.rm = T)) %>% 
+data_summary <- df %>% 
+  group_by(year, CPROV, prov_name, party) %>% 
+  summarise( 
+           dif = mean(dif, na.rm = T), 
+           dif_max = mean(dif_max, na.rm = T),
+           dif_min  = mean(dif_min, na.rm = T), 
+           ratio = mean(ratio, na.rm = TRUE),
+           ) %>% 
   arrange(party, year)
 
 
-## prov with alterations
-df %>% 
-  group_by(year, CAUT, CPROV) %>% 
-  summarise(alter_order = first(seats_alter_order), 
-            alter_dist = first(seats_alter_dist)) %>% 
-  group_by(year) %>% 
-  summarise(alter_order_sum = sum(alter_order),
-            alter_dist_sum = sum(alter_dist))
+
+# 3. Map analysis ---------------------------------------------------------
+
+map_spain <- read_rds("data/gadm36_ESP_2_sp.rds")
+data <- map_spain@data
+
+data_summary_long <- data_summary %>%
+  ungroup() %>% 
+  gather(key = "var", value = "value", dif:ratio) %>% 
+  mutate(var = paste(var, party, year, sep = "_")) %>%
+  select(CPROV, var, value) %>% 
+  spread(key = var, value = value) 
+
+data <- data %>% 
+  mutate(CPROV = as.numeric(CC_2)) %>% 
+  left_join(data_summary_long, by = "CPROV")
+
+map_spain@data <- data
+
+map_spain <- subset(map_spain, !(NAME_2 %in% c("Baleares", "Las Palmas", "Santa Cruz de Tenerife", "Ceuta", "Melilla")))
+
+brks <- c(-Inf, 0 , 3, 6, Inf)
+
+pp_max <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_PP_2015", "dif_max_PP_2016", "dif_max_PP_2019"), palette = "Blues", title = "PP", breaks = brks) +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
 
-list_provs <- df %>% 
-  group_by(year, CAUT, CPROV, prov_name) %>% 
-  summarise(alter_order = first(seats_alter_order), 
-            alter_dist = first(seats_alter_dist)) %>% 
-  filter(alter_order == 1 | alter_dist == 1)
+cs_max <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_Cs_2015", "dif_max_Cs_2016", "dif_max_Cs_2019"), palette = "Oranges", title = "C's", breaks = brks) +
+  tm_facets(sync = TRUE, ncol = 3)  + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
+
+vox_max <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_VOX_2015", "dif_max_VOX_2016", "dif_max_VOX_2019"), palette = "Greens", breaks = brks, title = "VOX") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
+
+psoe_max <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_PSOE_2015", "dif_max_PSOE_2016", "dif_max_PSOE_2019"), palette = "Reds", breaks = brks, title = "PSOE") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
 
-## ggplot
-provs_2019 <- list_provs %>% filter(year == 2019) %>% pull(prov_name)
+up_max <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_Podemos_2015", "dif_max_Podemos_2016", "dif_max_Podemos_2019"), palette = "Purples", breaks = brks, title = "Podemos") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
-ggplot(filter(df, prov_name %in% provs_2019), aes(x = por_cong, y = party)) +
-  geom_point(col = "red") +
-  geom_point(aes(x = min_sen, y = party), col = "green") +
-  geom_point(aes(x = max_sen, y = party), col = "green") +
-  facet_grid(prov_name ~ year) 
+dif_max_der <- tmap_arrange(pp_max, cs_max, vox_max, nrow = 3)
+dif_max_izq <- tmap_arrange(psoe_max, up_max, nrow = 2)
+
+pp_min <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_min_PP_2015", "dif_min_PP_2016", "dif_min_PP_2019"), palette = "Blues", title = "PP", breaks = brks) +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
 
+cs_min <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_min_Cs_2015", "dif_min_Cs_2016", "dif_min_Cs_2019"), palette = "Oranges", title = "C's", breaks = brks) +
+  tm_facets(sync = TRUE, ncol = 3)  + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
-a <- filter(df, prov_name %in% provs_2019)
+vox_min <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_min_VOX_2015", "dif_min_VOX_2016", "dif_min_VOX_2019"), palette = "Greens", breaks = brks, title = "VOX") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
+psoe_min <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_max_PSOE_2015", "dif_max_PSOE_2016", "dif_max_PSOE_2019"), palette = "Reds", breaks = brks, title = "PSOE") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
 
+up_min <- tm_shape(map_spain) + 
+  tm_polygons(c("dif_min_Podemos_2015", "dif_min_Podemos_2016", "dif_min_Podemos_2019"), palette = "Purples", breaks = brks, title = "Podemos") +
+  tm_facets(sync = TRUE, ncol = 3) + 
+  tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE)
+
+dif_min_der <- tmap_arrange(pp_min, cs_min, vox_min, nrow = 3)
+dif_min_izq <- tmap_arrange(psoe_min, up_min, nrow = 2)
+
+dif_max_izq
+dif_min_izq
+dif_max_der
+dif_min_der
+
+# 3. Case analysis Guadalajara and Cuenca ---------------------------------
+
+data_cases <- df %>% 
+  filter(prov_name %in% c("Guadalajara", "Castellón") & !(party %in% c("PSOE", "Podemos"))) %>% 
+  group_by(year, CPROV, prov_name, party) %>% 
+  summarise(min_sen = first(min_sen),
+            max_sen = first(max_sen),
+            por_cong = first(por_cong)) %>% 
+  mutate(party = fct_relevel(party, "Podemos", "PSOE", "VOX", "Cs", "PP"))
+
+cols <- c(PSOE = "red", PP = "blue", Cs = "orange", VOX = "green", Podemos = "purple")
+
+plot <- ggplot(data_cases, aes(x = por_cong, y = party, col = party)) +
+  geom_point(size = 3, shape = 19, alpha = .4) +
+  geom_errorbarh(aes(y = party, xmin = min_sen, xmax = max_sen), height = .3) +
+  scale_color_manual(values = cols) +
+  facet_grid(prov_name ~ year) +
+  theme(legend.position = "none",
+        axis.title = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text = element_text(family = "Arial", colour = "black"),
+        panel.grid.major.x  = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(colour = "grey", linetype = "dotted"),
+        panel.background = element_rect(fill = "white"),
+        strip.background = element_rect(fill = "lightblue"),
+        strip.text = element_text(family = "Arial", colour = "black", hjust = .1)
+        )
+
+plot  
+
+write_rds(dif_max_der, "data/dif_max_der.RDS")
+write_rds(dif_min_der, "data/dif_min_der.RDS")
+write_rds(plot, "data/plot_cases.RDS")
+
+tmap_mode("plot")
+dif_max_der
