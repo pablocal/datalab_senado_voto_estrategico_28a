@@ -1,0 +1,77 @@
+---
+title: "El voto estratégico al Senado el 28-A"
+author: "Pablo Cabrera Álvarez"
+date: "Noviembre 2019"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(tmap)
+library(leaflet)
+
+plot_cases <- read_rds("../data/plot_cases.RDS")
+plot_cis <- read_rds("../data/plot_cis.RDS")
+# plot_impact <- read_rds("../data/plot_imp.RDS")
+
+# tmap_mode("view")
+```
+
+Uno de los hitos de la noche electoral del 28 de abril fue la victoria del PSOE en el Senado por mayoría absoluta, tras más de 20 años de hegemonía del PP. Esa nueva mayoría de 121 escaños se dio gracias a la fragmentación del voto de la derecha, que permitió al PSOE ser la primera fuerza en provincias con un perfil electoral conservador. Un ejemplo es el caso de Burgos, en la que el PSOE consiguió tres de los cuatro senadores en juego, algo que no había ocurrido nunca antes, ni siquiera en las elecciones de 1982. 
+
+Las elecciones al Senado se rigen por un sistema mayoritario. Cada provincia^[En el caso de las islas, cada isla principal (Mallorca, Gran Canaria y Tenerife) elige dos senadores, mientras que el resto de islas elige un sendador cada una. Ceuta y Melilla eligen dos cada una.] elige cuatro senadores —Madrid y Zamora, por ejemplo, eligen el mismo número de representantes—, pero los votantes sólo pueden seleccionar a un máximo de tres candidatos en la papeleta. Históricamente estas elecciones han quedado en un segundo plano, los votantes solían marcar los tres candidatos al Senado del mismo partido al que votaban al Congreso. El resultado es que el partido más votado en cada provincia obtenía tres escaños, mientras que el segundo más votado uno. Sin embargo, en las elecciones de abril el Senado jugó un papel más destacado que en pasadas citas, en parte, por el protagonismo que tuvo en la aplicación del artículo 155.
+
+Ante el escenario de fragmentación en la derecha, los votantes del PP, C's y Vox recurrieron a dos estrategias para frenar una posible mayoría progresista en la Cámara Alta: ejercer el voto útil hacia el PP o un voto estratégico del tipo 1 (PP)+ 1 (C's) + 1 (Vox). De hecho, el 1+1+1 protagonizó un mensaje de whatsapp que se [viralizó durante la campaña](https://verne.elpais.com/verne/2019/04/17/articulo/1555498988_742073.html). Las probabilidades de éxito de esta estrategia, que llegó a [encender las alarmas en el PP](https://youtu.be/yhnjFpgJsVw), eran reducidas al requerir un alto grado de coordinación entre los votantes. 
+
+Los resultados electorales de abril demuestran que ninguna de estas estrategias, el 1+1+1 o el voto útil al PP, sirvieron para evitar una mayoría progresista en el Senado, aunque en provincias como Madrid, Palencia, Soria o Murcia se llegó a alterar la distribución de los senadores. El caso de Madrid es bastante ilustrativo, allí el PSOE obtuvo el primer y el tercer escaño, mientras que el PP, con Pío García Escudero a la cabeza, retuvo el segundo asiento. El cuarto fue para Ciudadanos.
+
+En abril hubo voto estratégico, sobre todo en la derecha, ya sea en la forma de voto útil al PP o como 1+1+1. 
+
+## ¿Dónde y en qué medida se dio el voto estratégico?
+
+Los datos electorales agregados, en este caso a nivel provincial^[El análisis se limita a las circunscripciones (provincias) que tienen asignadas cuatro senadores, es decir, no se incluyen las islas, Ceuta y Melilla.], aportan alguna pista sobre el impacto del voto estratégico en estas últimas elecciones.
+
+El voto estratégico existe si los porcentajes de voto al congreso y al senado del mismo partido difieren. Por ejemplo, si los electores de la derecha optaron por el 1+1+1, lo que se espera es que los cabeza de lista al Senado obtengan más votos que sus candidaturas al Congreso. Si por el contrario, optaron por el voto útil al PP, el candidato con menos votos del PP al Senado debería tener más votos que la candidatura al Congreso.
+
+El primer conjunto de mapas muestra, para las últimas tres elecciones generales, la diferencia entre el porcentaje de votos obtenidos por el candidato más votado al Senado de cada partido y la candidatura al Congreso. En las elecciones de abril el volumen de movimiento fue mucho mayor que en cualquier elección hasta la fecha, pero sobre todo entre lo electores de derecha. En la mayoría de provincias hubo un cierto impacto del 1(PP)+1(C's), y menos del +1(Vox). Entre los electores de izquierda, sin embargo, el voto estratégico al Senado apenas existió.
+
+Sobre el caso de Vox, en las elecciones de 2015 y 2016 presentó un sólo candidato al Senado por circunscripción, que por lo general recibía más votos que la candidatura al Congreso, aunque no dejaba de ser un resultado anecdótico.
+
+Las candidaturas de PSOE y UP al Senado apenas registraron voto estratégico, al menos eso se deduce de los resultados agregados. En alguna circunscripción como Madrid, tanto la cabeza de lista al Senado del PSOE como la de UP registraron mejores resultados que sus candidaturas al Congreso, pero la magnitud de esta diferencia apenas llegó a los 100.000 votos.   
+
+![Fig 1. Diferencia entre los votos obtenidos por el candidato más votado al Senado y los votos obtenidos por la candidatura al Congreso.](dif_max.png)
+
+El segundo conjunto de mapas presenta la misma diferencia, pero utilizando el candidato al Senado que menos votos obtuvo. En estos mapas se percibe el impacto neto del voto útil. Cuando todos los candidatos al Senado de un partido reciben más votos que la candidatura al Congreso se trata de voto útil. Esto le ocurrió al PP en abril en algunas provincias, como Zamora o las provincias de la Comunidad Valenciana.
+
+
+![Fig 2. Diferencia entre los votos obtenidos por el candidato menos votado al Senado y los votos obtenidos por la candidatura al Congreso.](dif_min.png)
+
+
+## Los casos de Madrid y Zamora
+
+Para profundizar en las dinámicas de voto estratégico vamos a poner la lupa sobre dos casos concretos, los de Madrid y Zamora. Mientras que en Madrid hay indicios de un mayor efecto del voto 1+1+1, en Zamora se impone el voto útil al PP. 
+
+En la provincia de Madrid los tres cabezas de lista de PP, C's y Vox consiguieron más votos que sus candidaturas al Congreso. En el caso de Zamora, por el contrario, todos los candidatos al Senado del PP obtuvieron más votos que la candidatura al Congreso. Esto implica que votantes de otros partidos, como C's o Vox, marcaron a los candidatos populares en la papeleta sepia. 
+
+En la izquierda apenas hubo movimientos en estas dos provincias, como en elecciones anteriores.
+
+```{r, echo=FALSE, warning=FALSE, fig.align='center'}
+plot_cases
+```
+
+## El postelectoral del CIS
+
+El problema de usar datos agregados es que pueden ocultar los movimientos que se producen a nivel individual. Los datos de una encuesta, como el estudio postelectoral del CIS, nos permiten descubrir y cuantificar esos flujos. Según el CIS, el 14% de los votantes de los tres principales partidos de la derecha hicieron un voto estratégico al Senado, la mayoría de ellos, el 10%, decidió votar a varios partidos de forma simultánea. 
+
+
+```{r, echo=FALSE, warning=FALSE, fig.align='center'}
+plot_cis
+```
+ 
+En resumen, aunque no afectaran de forma sustancial a la distribución de escaños, en las pasadas elecciones generales creció de forma significativa el número de votantes de partidos de la derecha que ejercieron un voto estratégico al Senado. También sorprende el impacto que llegó a tener la propuesta de voto estratégico 1+1+1 que, sin estar impulsada por un partido, se difundió por las redes sociales y produjo cambios significativos en los resultados en lugares como Madrid. El domingo estamos convocados de nuevo a las urnas y veremos si en esta ocasión, tras la experiencia de abril, hay un nuevo repunte del voto estratégico. Si, como anuncian las encuestas, el PP está más fuerte que en el mes de abril, el voto estratégico puede ser determinante para configurar la mayoría en el Senado.
+
+Los datos y el código del análisis están en abierto [aquí](https://github.com/pablocal/datalab_senado_voto_estrategico_28a).
+
+
+
+
