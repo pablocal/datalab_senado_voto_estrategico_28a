@@ -177,7 +177,7 @@ vox_min <- tm_shape(map_spain) +
                                  text.or.more = "o más"))
 
 psoe_min <- tm_shape(map_spain) + 
-  tm_polygons(c("dif_max_PSOE_2015", "dif_max_PSOE_2016", "dif_max_PSOE_2019"), palette = "Reds", breaks = brks, title = "PSOE", midpoint = 0) +
+  tm_polygons(c("dif_min_PSOE_2015", "dif_min_PSOE_2016", "dif_min_PSOE_2019"), palette = "Reds", breaks = brks, title = "PSOE", midpoint = 0) +
   tm_facets(sync = TRUE, ncol = 3) + 
   tm_layout(bg.color = "white", frame = FALSE, legend.outside = TRUE) +
   tm_layout(legend.format = list(text.separator = "a",
